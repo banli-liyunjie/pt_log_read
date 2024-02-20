@@ -92,8 +92,7 @@ regex out_temp_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}]exit
 regex out_vol_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}]exit info:asic vol outof range");
 regex sensor_err_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}]exit info:sensor err");
 regex find_asic_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}]L1: Find asics");
-
-
+regex bad_420_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}]level_high: \\d, level_low: 3, matched_freq: \\d+, freq_min: \\d+");
 
 void parse_single_file(ofstream& outf, const string& f_path)
 {
@@ -198,6 +197,17 @@ void parse_single_file(ofstream& outf, const string& f_path)
             if(board_sn != "" && board_uset.find(board_sn) == board_uset.end())
             {
                 outf << board_sn << " (find asic err)";
+                outf << "\n";
+
+                board_uset.emplace(board_sn);
+            }
+            break;
+        }
+        if(regex_match(buf, m, bad_420_regex))
+        {
+            if(board_sn != "" && board_uset.find(board_sn) == board_uset.end())
+            {
+                outf << board_sn << " (   bad 420   )";
                 outf << "\n";
 
                 board_uset.emplace(board_sn);
