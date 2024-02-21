@@ -206,7 +206,7 @@ bool parse_single_file(ofstream& outf, const string& f_path, string& board_sn)
         {
             if(board_sn != "")
             {
-                outf << board_sn << " (env too high )" << "[current env temp is : " << stoi(m[1]) << "]";
+                outf << board_sn << " (env too high )" << "[current env temp is : " << stoi(m[1]) << "]\n";
                 cb.env_high++;
                 type_clear = true;
             }
@@ -216,7 +216,7 @@ bool parse_single_file(ofstream& outf, const string& f_path, string& board_sn)
         {
             if(board_sn != "")
             {
-                outf << board_sn << " ( env too low )" << "[current env temp is : " << stoi(m[1]) << "]";
+                outf << board_sn << " ( env too low )" << "[current env temp is : " << stoi(m[1]) << "]\n";
                 cb.env_low++;
                 type_clear = true;
             }
