@@ -145,7 +145,7 @@ regex sweep_ok_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}]L2: 
 regex test_over_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}]TEST OVER...");
 regex env_low_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}]env temp (\\d+) is too low, pattern text exit");
 regex env_high_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}]env temp (\\d+) is too high, pattern text exit");
-
+regex ft_version_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}]current ft_version : (.+), bin : (.+)");
 
 bool parse_single_file(ofstream& outf, const string& f_path, string& board_sn)
 {
@@ -157,9 +157,11 @@ bool parse_single_file(ofstream& outf, const string& f_path, string& board_sn)
     set<int> abnormal_asic;
     set<int> asic_null;
     set<int> asic_bad;
-    bool is_bad_420 = false;
 
+    bool is_bad_420 = false;
     bool type_clear = false;
+
+    string ft, bin;
 
     board_sn = "";
     while (file.getline(buf,size_t(buf)))
@@ -190,6 +192,12 @@ bool parse_single_file(ofstream& outf, const string& f_path, string& board_sn)
             board_uset.emplace(board_sn);
             continue;
         }
+        if(regex_match(buf, m, ft_version_regex))
+        {
+            ft = m[1];
+            bin = m[2];
+            continue;
+        }
         if(regex_search(buf, m, abnormal_cooling_regex))
         {
             int asic = stoi(m[1]);
@@ -206,7 +214,7 @@ bool parse_single_file(ofstream& outf, const string& f_path, string& board_sn)
         {
             if(board_sn != "")
             {
-                outf << board_sn << " (env too high )" << "[current env temp is : " << stoi(m[1]) << "]\n";
+                outf << board_sn << " " << ft << " " << bin << " (env too high )" << "[current env temp is : " << stoi(m[1]) << "]\n";
                 cb.env_high++;
                 type_clear = true;
             }
@@ -216,7 +224,7 @@ bool parse_single_file(ofstream& outf, const string& f_path, string& board_sn)
         {
             if(board_sn != "")
             {
-                outf << board_sn << " ( env too low )" << "[current env temp is : " << stoi(m[1]) << "]\n";
+                outf << board_sn << " " << ft << " " << bin << " ( env too low )" << "[current env temp is : " << stoi(m[1]) << "]\n";
                 cb.env_low++;
                 type_clear = true;
             }
@@ -226,7 +234,7 @@ bool parse_single_file(ofstream& outf, const string& f_path, string& board_sn)
         {
             if(board_sn != "")
             {
-                outf << board_sn << " (   out temp  )";
+                outf << board_sn << " " << ft << " " << bin << " (   out temp  )";
                 if(abnormal_asic.size() > 0)
                 {
                     outf << "[abnormal asic : ";
@@ -255,7 +263,7 @@ bool parse_single_file(ofstream& outf, const string& f_path, string& board_sn)
         { 
             if(board_sn != "")
             {
-                outf << board_sn << " (   out vol   )";
+                outf << board_sn << " " << ft << " " << bin << " (   out vol   )";
                 if(asic_null.size() > 0)
                 {
                     outf << "[asic null : ";
@@ -275,7 +283,7 @@ bool parse_single_file(ofstream& outf, const string& f_path, string& board_sn)
         {
             if(board_sn != "")
             {
-                outf << board_sn << " ( sensor err  )";
+                outf << board_sn << " " << ft << " " << bin << " ( sensor err  )";
                 outf << "\n";
                 cb.sensor_err++;
                 type_clear = true;
@@ -286,7 +294,7 @@ bool parse_single_file(ofstream& outf, const string& f_path, string& board_sn)
         {
             if(board_sn != "")
             {
-                outf << board_sn << " (find asic err)";
+                outf << board_sn << " " << ft << " " << bin << " (find asic err)";
                 outf << "\n";
                 cb.find_asic_err++;
                 type_clear = true;
@@ -310,7 +318,7 @@ bool parse_single_file(ofstream& outf, const string& f_path, string& board_sn)
             {
                 if(display_ok)
                 {
-                    outf << board_sn << " (  sweep ok   )" << "[level : " << stoi(m[1]) << "]";
+                    outf << board_sn << " " << ft << " " << bin << " (  sweep ok   )" << "[level : " << stoi(m[1]) << "]";
                     outf << "\n";
                 }
                 cb.sweep_ok++;
@@ -327,12 +335,12 @@ bool parse_single_file(ofstream& outf, const string& f_path, string& board_sn)
                     if(is_bad_420)
                     {
                         cb.bad_420++;
-                        outf << board_sn << " (   bad 420   )";
+                        outf << board_sn << " " << ft << " " << bin << " (   bad 420   )";
                     }
                     else
                     {
                         cb.bad_asic++;
-                        outf << board_sn << " (   bad asic  )";
+                        outf << board_sn << " " << ft << " " << bin << " (   bad asic  )";
                     }
                     outf << "[bad asic : ";
                     for(auto asic : asic_bad)
