@@ -151,7 +151,7 @@ bool parse_single_file(ofstream& outf, const string& f_path, string& board_sn)
 {
     ifstream file;
     file.open(f_path, ios::in);
-    char buf[1024];
+    char buf[2048];
     cmatch m;
 
     set<int> abnormal_asic;
@@ -355,6 +355,6 @@ bool parse_single_file(ofstream& outf, const string& f_path, string& board_sn)
         }
     }
 
-    return type_clear;
     file.close();
+    return type_clear;
 }
