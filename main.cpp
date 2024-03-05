@@ -31,10 +31,8 @@ struct count_board{
 bool display_ok = false;
 string self_file_name;
 
-int main(int argc, char *argv[])
-{
-    if (argc > 1 && (string(argv[1]) == "-d" || string(argv[1]) == "--display"))
-    {
+int main(int argc, char *argv[]){
+    if (argc > 1 && (string(argv[1]) == "-d" || string(argv[1]) == "--display")){
         cout << "should display the ok board" << endl;
         display_ok = true;
     }
@@ -89,8 +87,7 @@ void get_log_error(const char* p)
     strcat(find_path, "\\*.*");
 
     HANDLE h_find = FindFirstFile(find_path, &find_file_data);
-    if(INVALID_HANDLE_VALUE == h_find)
-    {
+    if(INVALID_HANDLE_VALUE == h_find){
         cout << "error find\n";
         return;
     }
@@ -99,19 +96,15 @@ void get_log_error(const char* p)
     string board_sn;
     unordered_map<string, string> unknow_board;
 
-    while(true)
-    {
-        if(find_file_data.dwFileAttributes & (~FILE_ATTRIBUTE_DIRECTORY))
-        {
+    while(true){
+        if(find_file_data.dwFileAttributes & (~FILE_ATTRIBUTE_DIRECTORY)){
             string file_name(find_file_data.cFileName);
-            if(file_name != "result.txt" && file_name != self_file_name)
-            {
+            if(file_name != "result.txt" && file_name != self_file_name){
                 cout << file_name << endl;
                 string f_path(p);
                 f_path += "/" + file_name;
                 type_clear = parse_single_file(outf, f_path, board_sn);
-                if(!type_clear)
-                {
+                if(!type_clear){
                     cb.unknow++;
                     unknow_board.emplace(pair<string, string>(file_name, board_sn == "" ? "unknow" : board_sn));
                 }
@@ -126,8 +119,7 @@ void get_log_error(const char* p)
     outf << "\nfind asic err : " << cb.find_asic_err << "  ||  sensor err : " << cb.sensor_err;
     outf << "\nenv temp too low : " << cb.env_low << "  ||  env temp too high : " << cb.env_high;
     outf << "\nunknow board info : " << cb.unknow << "\n";
-    for(auto uk : unknow_board)
-    {
+    for(auto uk : unknow_board){
         outf << uk.first << " board_sn " << uk.second << "\n";
     }
 }
@@ -147,8 +139,184 @@ regex env_low_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}]env t
 regex env_high_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}]env temp (\\d+) is too high, pattern text exit");
 regex ft_version_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}]current ft_version : (.+), bin : (.+)");
 
-bool parse_single_file(ofstream& outf, const string& f_path, string& board_sn)
-{
+#define CALL_BOARD_SN [&](void* ptr){\
+            if(board_sn != ""){\
+                if(board_sn == m[1])\
+                    return true;\
+                else{\
+                    cout << "this log is abnormal"<< endl;\
+                    cb.total--;\
+                    type_clear = false;\
+                    return false;\
+                }\
+            }\
+            board_sn = m[1];\
+            if(board_uset.find(board_sn) != board_uset.end()){\
+                cout << "repeated board : " << board_sn << endl;\
+                type_clear = true;\
+                return false;\
+            }\
+            cb.total++;\
+            board_uset.emplace(board_sn);\
+            return true;\
+        }
+#define CALL_FT_VERSION [&](void* ptr){\
+            ft = m[1];\
+            bin = m[2];\
+            return true;\
+        }
+#define CALL_ABNORMAL [&](void* ptr){\
+            int asic = stoi(m[1]);\
+            abnormal_asic.emplace(asic);\
+            return true;\
+        }
+#define CALL_ASIC_NULL [&](void* ptr){\
+            int asic = stoi(m[1]);\
+            asic_null.emplace(asic);\
+            return true;\
+        }
+#define CALL_TEMP_HIGH [&](void* ptr){\
+            if(board_sn != ""){\
+                outf << board_sn << " " << ft << " " << bin << " (env too high )" << "[current env temp is : " << stoi(m[1]) << "]\n";\
+                cb.env_high++;\
+                type_clear = true;\
+            }\
+            return false;\
+        }
+#define CALL_TEMP_LOW [&](void* ptr){\
+            if(board_sn != ""){\
+                outf << board_sn << " " << ft << " " << bin << " ( env too low )" << "[current env temp is : " << stoi(m[1]) << "]\n";\
+                cb.env_low++;\
+                type_clear = true;\
+            }\
+            return false;\
+        }
+#define CALL_OUT_TEMP [&](void* ptr){\
+            if(board_sn != ""){\
+                outf << board_sn << " " << ft << " " << bin << " (   out temp  )";\
+                if(abnormal_asic.size() > 0){\
+                    outf << "[abnormal asic : ";\
+                    for(auto asic : abnormal_asic){\
+                        outf << asic << " ";\
+                    }\
+                    outf << "]";\
+                }\
+                if(asic_null.size() > 0){\
+                    outf << "[asic null : ";\
+                    for(auto asic : asic_null){\
+                        outf << asic << " ";\
+                    }\
+                    outf << "]";\
+                }\
+                outf << "\n";\
+                cb.out_temp++;\
+                type_clear = true;\
+            }\
+            return false;\
+        }
+#define CALL_OUT_VOL [&](void* ptr){\
+            if(board_sn != ""){\
+                outf << board_sn << " " << ft << " " << bin << " (   out vol   )";\
+                if(asic_null.size() > 0){\
+                    outf << "[asic null : ";\
+                    for(auto asic : asic_null){\
+                        outf << asic << " ";\
+                    }\
+                    outf << "]";\
+                }\
+                outf << "\n";\
+                cb.out_vol++;\
+                type_clear = true;\
+            }\
+            return false;\
+        }
+#define CALL_SENSOR_ERR [&](void* ptr){\
+            if(board_sn != ""){\
+                outf << board_sn << " " << ft << " " << bin << " ( sensor err  )";\
+                outf << "\n";\
+                cb.sensor_err++;\
+                type_clear = true;\
+            }\
+            return false;\
+        }
+#define CALL_FIND_ASIC [&](void* ptr){\
+            if(board_sn != ""){\
+                outf << board_sn << " " << ft << " " << bin << " (find asic err)";\
+                outf << "\n";\
+                cb.find_asic_err++;\
+                type_clear = true;\
+            }\
+            return false;\
+        }
+#define CALL_BAD_420 [&](void* ptr){\
+            is_bad_420 = true;\
+            return true;\
+        }
+#define CALL_BAD_LIST [&](void* ptr){\
+            int asic = stoi(m[1]);\
+            asic_bad.emplace(asic);\
+            return true;\
+        }
+#define CALL_SWEEP_OK [&](void* ptr){\
+            if(board_sn != ""){\
+                if(display_ok){\
+                    outf << board_sn << " " << ft << " " << bin << " (  sweep ok   )" << "[level : " << stoi(m[1]) << "]";\
+                    outf << "\n";\
+                }\
+                cb.sweep_ok++;\
+                type_clear = true;\
+            }\
+            return false;\
+        }
+#define CALL_TEST_OVER [&](void* ptr){\
+            if(board_sn != ""){\
+                if(asic_bad.size() > 0){\
+                    if(is_bad_420){\
+                        cb.bad_420++;\
+                        outf << board_sn << " " << ft << " " << bin << " (   bad 420   )";\
+                    }else{\
+                        cb.bad_asic++;\
+                        outf << board_sn << " " << ft << " " << bin << " (   bad asic  )";\
+                    }\
+                    outf << "[bad asic : ";\
+                    for(auto asic : asic_bad){\
+                        outf << asic <<" ";\
+                    }\
+                    outf << "]\n";\
+                    type_clear = true;\
+                }\
+                return false;\
+            }\
+        }
+
+
+#define REG(FUNC)\
+    FUNC(regex_search, board_sn_regex,         CALL_BOARD_SN)\
+    FUNC(regex_match,  ft_version_regex,       CALL_FT_VERSION)\
+    FUNC(regex_search, abnormal_cooling_regex, CALL_ABNORMAL)\
+    FUNC(regex_search, asic_null_regex,        CALL_ASIC_NULL)\
+    FUNC(regex_match,  env_high_regex,         CALL_TEMP_HIGH)\
+    FUNC(regex_match,  env_low_regex,          CALL_TEMP_LOW)\
+    FUNC(regex_match,  out_temp_regex,         CALL_OUT_TEMP)\
+    FUNC(regex_match,  out_vol_regex,          CALL_OUT_VOL)\
+    FUNC(regex_match,  sensor_err_regex,       CALL_SENSOR_ERR)\
+    FUNC(regex_search, find_asic_regex,        CALL_FIND_ASIC)\
+    FUNC(regex_match,  bad_420_regex,          CALL_BAD_420)\
+    FUNC(regex_search, bad_asic_list_regex,    CALL_BAD_LIST)\
+    FUNC(regex_search, sweep_ok_regex,         CALL_SWEEP_OK)\
+    FUNC(regex_match,  test_over_regex,        CALL_TEST_OVER)
+
+#define CHECK_LINE_DATA(regex_fuc, regex_str, func)\
+            if(regex_fuc(buf, m, regex_str)){\
+                auto f = func;\
+                if(f(nullptr))\
+                    continue;\
+                else\
+                    break;\
+            }
+    
+
+bool parse_single_file(ofstream& outf, const string& f_path, string& board_sn){
     ifstream file;
     file.open(f_path, ios::in);
     char buf[2048];
@@ -164,195 +332,8 @@ bool parse_single_file(ofstream& outf, const string& f_path, string& board_sn)
     string ft, bin;
 
     board_sn = "";
-    while (file.getline(buf,size_t(buf)))
-    {
-        if(regex_search(buf, m, board_sn_regex))
-        {
-            if(board_sn != "")
-            {
-                if(board_sn == m[1])
-                    continue;
-                else
-                {
-                    cout << "this log is abnormal"<< endl;
-                    cb.total--;
-                    type_clear = false;
-                    //unknow 
-                    break;
-                }
-            }
-            board_sn = m[1];
-            if(board_uset.find(board_sn) != board_uset.end())
-            {
-                cout << "repeated board : " << board_sn << endl;
-                type_clear = true;
-                break;
-            }
-            cb.total++;
-            board_uset.emplace(board_sn);
-            continue;
-        }
-        if(regex_match(buf, m, ft_version_regex))
-        {
-            ft = m[1];
-            bin = m[2];
-            continue;
-        }
-        if(regex_search(buf, m, abnormal_cooling_regex))
-        {
-            int asic = stoi(m[1]);
-            abnormal_asic.emplace(asic);
-            continue;
-        }
-        if(regex_search(buf, m, asic_null_regex))
-        {
-            int asic = stoi(m[1]);
-            asic_null.emplace(asic);
-            continue;
-        }
-        if(regex_match(buf, m, env_high_regex))
-        {
-            if(board_sn != "")
-            {
-                outf << board_sn << " " << ft << " " << bin << " (env too high )" << "[current env temp is : " << stoi(m[1]) << "]\n";
-                cb.env_high++;
-                type_clear = true;
-            }
-            break;
-        }
-        if(regex_match(buf, m, env_low_regex))
-        {
-            if(board_sn != "")
-            {
-                outf << board_sn << " " << ft << " " << bin << " ( env too low )" << "[current env temp is : " << stoi(m[1]) << "]\n";
-                cb.env_low++;
-                type_clear = true;
-            }
-            break;
-        }
-        if(regex_match(buf, m, out_temp_regex))
-        {
-            if(board_sn != "")
-            {
-                outf << board_sn << " " << ft << " " << bin << " (   out temp  )";
-                if(abnormal_asic.size() > 0)
-                {
-                    outf << "[abnormal asic : ";
-                    for(auto asic : abnormal_asic)
-                    {
-                        outf << asic << " ";
-                    }
-                    outf << "]";
-                }
-                if(asic_null.size() > 0)
-                {
-                    outf << "[asic null : ";
-                    for(auto asic : asic_null)
-                    {
-                        outf << asic << " ";
-                    }
-                    outf << "]";
-                }
-                outf << "\n";
-                cb.out_temp++;
-                type_clear = true;
-            }
-            break;
-        }
-        if(regex_match(buf, m, out_vol_regex))
-        { 
-            if(board_sn != "")
-            {
-                outf << board_sn << " " << ft << " " << bin << " (   out vol   )";
-                if(asic_null.size() > 0)
-                {
-                    outf << "[asic null : ";
-                    for(auto asic : asic_null)
-                    {
-                        outf << asic << " ";
-                    }
-                    outf << "]";
-                }
-                outf << "\n";
-                cb.out_vol++;
-                type_clear = true;
-            }
-            break;
-        }
-        if(regex_match(buf, m, sensor_err_regex))
-        {
-            if(board_sn != "")
-            {
-                outf << board_sn << " " << ft << " " << bin << " ( sensor err  )";
-                outf << "\n";
-                cb.sensor_err++;
-                type_clear = true;
-            }
-            break;
-        }
-        if(regex_search(buf, m, find_asic_regex))
-        {
-            if(board_sn != "")
-            {
-                outf << board_sn << " " << ft << " " << bin << " (find asic err)";
-                outf << "\n";
-                cb.find_asic_err++;
-                type_clear = true;
-            }
-            break;
-        }
-        if(regex_match(buf, m, bad_420_regex))
-        {
-            is_bad_420 = true;
-            continue;
-        }
-        if(regex_search(buf, m, bad_asic_list_regex))
-        {
-            int asic = stoi(m[1]);
-            asic_bad.emplace(asic);
-            continue;
-        }
-        if(regex_search(buf, m, sweep_ok_regex))
-        {
-            if(board_sn != "")
-            {
-                if(display_ok)
-                {
-                    outf << board_sn << " " << ft << " " << bin << " (  sweep ok   )" << "[level : " << stoi(m[1]) << "]";
-                    outf << "\n";
-                }
-                cb.sweep_ok++;
-                type_clear = true;
-            }
-            break;
-        }
-        if(regex_match(buf, m, test_over_regex))
-        {
-            if(board_sn != "")
-            {
-                if(asic_bad.size() > 0)
-                {
-                    if(is_bad_420)
-                    {
-                        cb.bad_420++;
-                        outf << board_sn << " " << ft << " " << bin << " (   bad 420   )";
-                    }
-                    else
-                    {
-                        cb.bad_asic++;
-                        outf << board_sn << " " << ft << " " << bin << " (   bad asic  )";
-                    }
-                    outf << "[bad asic : ";
-                    for(auto asic : asic_bad)
-                    {
-                        outf << asic <<" ";
-                    }
-                    outf << "]\n";
-                    type_clear = true;
-                }
-                break;
-            }
-        }
+    while (file.getline(buf,size_t(buf))){
+        REG(CHECK_LINE_DATA);
     }
 
     file.close();
