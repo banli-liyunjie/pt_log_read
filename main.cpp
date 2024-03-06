@@ -6,6 +6,7 @@
 #include <set>
 #include <unordered_set>
 #include <unordered_map>
+#include "count_board.h"
 
 using namespace std;
 
@@ -13,20 +14,7 @@ void get_log_error(const char* p);
 bool parse_single_file(ofstream& outf, const string& f_path, string& board_sn);
 
 unordered_set<string> board_uset;
-
-struct count_board{
-    int total = 0;
-    int sweep_ok = 0;
-    int bad_420 = 0;
-    int bad_asic = 0;
-    int out_temp = 0;
-    int out_vol = 0;
-    int find_asic_err = 0;
-    int sensor_err = 0;
-    int env_low = 0;
-    int env_high = 0;
-    int unknow = 0;
-} cb;
+count_board cb;
 
 bool display_ok = false;
 string self_file_name;
@@ -105,20 +93,20 @@ void get_log_error(const char* p)
                 f_path += "/" + file_name;
                 type_clear = parse_single_file(outf, f_path, board_sn);
                 if(!type_clear){
-                    cb.unknow++;
-                    unknow_board.emplace(pair<string, string>(file_name, board_sn == "" ? "unknow" : board_sn));
+                    cb[unknown]++;
+                    unknow_board.emplace(pair<string, string>(file_name, board_sn == "" ? "unknown" : board_sn));
                 }
             }
         }
         if(!FindNextFile(h_find, &find_file_data)) break;
     }
 
-    outf << "\ntotal : " << cb.total << "  ||  sweep ok : " << cb.sweep_ok;
-    outf << "\nbad_420 : " << cb.bad_420 << "  ||  bad asic : " << cb.bad_asic;
-    outf << "\nout temp : " << cb.out_temp << "  ||  out vol : " << cb.out_vol;
-    outf << "\nfind asic err : " << cb.find_asic_err << "  ||  sensor err : " << cb.sensor_err;
-    outf << "\nenv temp too low : " << cb.env_low << "  ||  env temp too high : " << cb.env_high;
-    outf << "\nunknow board info : " << cb.unknow << "\n";
+    outf << "\ntotal : " << cb.total << "  ||  sweep ok : " << cb[sweep_ok];
+    outf << "\nbad_420 : " << cb[bad_420] << "  ||  bad asic : " << cb[bad_asic];
+    outf << "\nout temp : " << cb[out_temp] << "  ||  out vol : " << cb[out_vol];
+    outf << "\nfind asic err : " << cb[find_asic_err] << "  ||  sensor err : " << cb[sensor_err];
+    outf << "\nenv temp too low : " << cb[env_low] << "  ||  env temp too high : " << cb[env_high];
+    outf << "\nunknow board info : " << cb[unknown] << "\n";
     for(auto uk : unknow_board){
         outf << uk.first << " board_sn " << uk.second << "\n";
     }
@@ -178,7 +166,7 @@ regex ft_version_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}]cu
 #define CALL_TEMP_HIGH [&](void* ptr){\
             if(board_sn != ""){\
                 outf << board_sn << " " << ft << " " << bin << " (env too high )" << "[current env temp is : " << stoi(m[1]) << "]\n";\
-                cb.env_high++;\
+                cb[env_high]++;\
                 type_clear = true;\
             }\
             return false;\
@@ -186,7 +174,7 @@ regex ft_version_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}]cu
 #define CALL_TEMP_LOW [&](void* ptr){\
             if(board_sn != ""){\
                 outf << board_sn << " " << ft << " " << bin << " ( env too low )" << "[current env temp is : " << stoi(m[1]) << "]\n";\
-                cb.env_low++;\
+                cb[env_low]++;\
                 type_clear = true;\
             }\
             return false;\
@@ -209,7 +197,7 @@ regex ft_version_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}]cu
                     outf << "]";\
                 }\
                 outf << "\n";\
-                cb.out_temp++;\
+                cb[out_temp]++;\
                 type_clear = true;\
             }\
             return false;\
@@ -225,7 +213,7 @@ regex ft_version_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}]cu
                     outf << "]";\
                 }\
                 outf << "\n";\
-                cb.out_vol++;\
+                cb[out_vol]++;\
                 type_clear = true;\
             }\
             return false;\
@@ -234,7 +222,7 @@ regex ft_version_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}]cu
             if(board_sn != ""){\
                 outf << board_sn << " " << ft << " " << bin << " ( sensor err  )";\
                 outf << "\n";\
-                cb.sensor_err++;\
+                cb[sensor_err]++;\
                 type_clear = true;\
             }\
             return false;\
@@ -243,7 +231,7 @@ regex ft_version_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}]cu
             if(board_sn != ""){\
                 outf << board_sn << " " << ft << " " << bin << " (find asic err)";\
                 outf << "\n";\
-                cb.find_asic_err++;\
+                cb[find_asic_err]++;\
                 type_clear = true;\
             }\
             return false;\
@@ -263,7 +251,7 @@ regex ft_version_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}]cu
                     outf << board_sn << " " << ft << " " << bin << " (  sweep ok   )" << "[level : " << stoi(m[1]) << "]";\
                     outf << "\n";\
                 }\
-                cb.sweep_ok++;\
+                cb[sweep_ok]++;\
                 type_clear = true;\
             }\
             return false;\
@@ -272,10 +260,10 @@ regex ft_version_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}]cu
             if(board_sn != ""){\
                 if(asic_bad.size() > 0){\
                     if(is_bad_420){\
-                        cb.bad_420++;\
+                        cb[bad_420]++;\
                         outf << board_sn << " " << ft << " " << bin << " (   bad 420   )";\
                     }else{\
-                        cb.bad_asic++;\
+                        cb[bad_asic]++;\
                         outf << board_sn << " " << ft << " " << bin << " (   bad asic  )";\
                     }\
                     outf << "[bad asic : ";\
