@@ -94,6 +94,7 @@
 #define CALL_SWEEP_OK [&](void* ptr){\
             if(board_sn != "" && tb == type_board::unknown){\
                 tb = type_board::sweep_ok;\
+                level = stoi(m[1]);\
             }\
             return true;\
 }

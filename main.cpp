@@ -20,7 +20,7 @@ bool display_ok = false;
 string self_file_name;
 
 int main(int argc, char *argv[]){
-    if (argc > 1 && (string(argv[1]) == "-d" || string(argv[1]) == "--display")){
+    if (argc > 1 && (string(argv[1]) == "-o" || string(argv[1]) == "--ok")){
         cout << "should display the ok board" << endl;
         display_ok = true;
     }
@@ -138,6 +138,7 @@ void get_log_error(const char* p)
                     }break;\
                 case type_board::env_low:\
                 case type_board::env_high: str += " [current env temp is : " + to_string(env_temp) + "]"; break;\
+                case type_board::sweep_ok: str += " [level :" + to_string(level) + "]"; break;\
                 default: break;\
             }\
             str += "\n";\
@@ -158,6 +159,7 @@ type_board parse_single_file(ofstream& outf, const string& f_path, string& board
 
     string ft, bin;
     int env_temp = 0;
+    int level;
 
     board_sn = "";
     while (file.getline(buf,size_t(buf))){
