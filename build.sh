@@ -1,4 +1,4 @@
-version=0.21
+version=0.22
 
 if [ ! -d "./out" ]; then
     mkdir "./out"
