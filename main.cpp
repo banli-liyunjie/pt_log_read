@@ -17,12 +17,18 @@ unordered_set<string> board_uset;
 count_board cb;
 
 bool display_ok = false;
+bool display_temp = false;
 string self_file_name;
 
 int main(int argc, char *argv[]){
-    if (argc > 1 && (string(argv[1]) == "-o" || string(argv[1]) == "--ok")){
-        cout << "should display the ok board" << endl;
-        display_ok = true;
+    for (int i = 1; i < argc; ++i) {
+        if ((string(argv[i]) == "-o" || string(argv[i]) == "--ok")) {
+            cout << "should display the ok board" << endl;
+            display_ok = true;
+        } else if ((string(argv[i]) == "-t" || string(argv[i]) == "--temp")) {
+            cout << "should display the env temperature" << endl;
+            display_temp = true;
+        }
     }
 
     std::vector<char> buffer(MAX_PATH);
@@ -113,36 +119,51 @@ void get_log_error(const char* p)
     }
 }
 
-#define GET_DIS_STR [&](void* ptr){\
-            string str = "";\
-            char c_str[100];\
-            sprintf(c_str, "%s %s %s \0", board_sn.c_str(), ft.c_str(), bin.c_str());\
-            str += string(c_str);\
-            str += get_board_type_str(tb);\
-            switch(tb){\
-                case type_board::bad_420 :\
-                case type_board::bad_asic : str += " [bad asic : "; for(auto asic : asic_bad) str += to_string(asic) + " "; str +="]";  break;\
-                case type_board::out_temp :\
-                case type_board::out_vol :\
-                    if(abnormal_asic.size() > 0){\
-                        str += " [abnormal asic : ";\
-                        for(auto asic : abnormal_asic)\
-                            str += to_string(asic) + " ";\
-                        str += "]";\
-                    }\
-                    if(asic_null.size() > 0){\
-                        str += " [asic null : ";\
-                        for(auto asic : asic_null)\
-                            str += to_string(asic) + " ";\
-                        str += "]";\
-                    }break;\
-                case type_board::env_low:\
-                case type_board::env_high: str += " [current env temp is : " + to_string(env_temp) + "]"; break;\
-                case type_board::sweep_ok: str += " [level :" + to_string(level) + "]"; break;\
-                default: break;\
-            }\
-            str += "\n";\
-            return str;\
+#define GET_DIS_STR [&](void* ptr) {                                          \
+    string str = "";                                                          \
+    char c_str[100];                                                          \
+    sprintf(c_str, "%s %s %s \0", board_sn.c_str(), ft.c_str(), bin.c_str()); \
+    str += string(c_str);                                                     \
+    if (display_temp) {                                                       \
+        sprintf(c_str, "[env temp : %d] \0", env_temp);                       \
+        str += string(c_str);                                                 \
+    }                                                                         \
+    str += get_board_type_str(tb);                                            \
+    switch (tb) {                                                             \
+    case type_board::bad_420:                                                 \
+    case type_board::bad_asic:                                                \
+        str += " [bad asic : ";                                               \
+        for (auto asic : asic_bad)                                            \
+            str += to_string(asic) + " ";                                     \
+        str += "]";                                                           \
+        break;                                                                \
+    case type_board::out_temp:                                                \
+    case type_board::out_vol:                                                 \
+        if (abnormal_asic.size() > 0) {                                       \
+            str += " [abnormal asic : ";                                      \
+            for (auto asic : abnormal_asic)                                   \
+                str += to_string(asic) + " ";                                 \
+            str += "]";                                                       \
+        }                                                                     \
+        if (asic_null.size() > 0) {                                           \
+            str += " [asic null : ";                                          \
+            for (auto asic : asic_null)                                       \
+                str += to_string(asic) + " ";                                 \
+            str += "]";                                                       \
+        }                                                                     \
+        break;                                                                \
+    case type_board::env_low:                                                 \
+    case type_board::env_high:                                                \
+        str += " [current env temp is : " + to_string(env_temp) + "]";        \
+        break;                                                                \
+    case type_board::sweep_ok:                                                \
+        str += " [level :" + to_string(level) + "]";                          \
+        break;                                                                \
+    default:                                                                  \
+        break;                                                                \
+    }                                                                         \
+    str += "\n";                                                              \
+    return str;                                                               \
 }
 
 type_board parse_single_file(ofstream& outf, const string& f_path, string& board_sn){
@@ -157,9 +178,9 @@ type_board parse_single_file(ofstream& outf, const string& f_path, string& board
 
     type_board tb = type_board::unknown;
 
-    string ft, bin;
-    int env_temp = 0;
-    int level;
+    string ft = "", bin = "";
+    int env_temp = -9999;
+    int level = 0;
 
     board_sn = "";
     while (file.getline(buf,size_t(buf))){

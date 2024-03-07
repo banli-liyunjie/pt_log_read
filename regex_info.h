@@ -44,17 +44,19 @@
             env_temp = stoi(m[1]);\
             return true;\
 }
-#define CALL_TEMP_HIGH [&](void* ptr){\
-            if(board_sn != "" && tb == type_board::unknown){\
-                tb = type_board::env_high;\
-            }\
-            return true;\
+#define CALL_TEMP_HIGH [&](void* ptr) {                \
+    if (board_sn != "" && tb == type_board::unknown) { \
+        env_temp = stoi(m[1]);                         \
+        tb = type_board::env_high;                     \
+    }                                                  \
+    return true;                                       \
 }
-#define CALL_TEMP_LOW [&](void* ptr){\
-            if(board_sn != "" && tb == type_board::unknown){\
-                tb = type_board::env_low;\
-            }\
-            return true;\
+#define CALL_TEMP_LOW [&](void* ptr) {                 \
+    if (board_sn != "" && tb == type_board::unknown) { \
+        env_temp = stoi(m[1]);                         \
+        tb = type_board::env_low;                      \
+    }                                                  \
+    return true;                                       \
 }
 #define CALL_OUT_TEMP [&](void* ptr){\
             if(board_sn != "" && tb == type_board::unknown){\
@@ -107,32 +109,32 @@
             return false;\
 }
 
-#define REG(FUNC)\
-    FUNC(regex_search, board_sn_regex,         CALL_BOARD_SN)\
-    FUNC(regex_match,  ft_version_regex,       CALL_FT_VERSION)\
-    FUNC(regex_match,  chip_bin_regex,         CALL_CHIP_BIN)\
-    FUNC(regex_search, abnormal_cooling_regex, CALL_ABNORMAL)\
-    FUNC(regex_search, asic_null_regex,        CALL_ASIC_NULL)\
-    FUNC(regex_match,  env_temp_regex,         CALL_TEMP)\
-    FUNC(regex_match,  env_high_regex,         CALL_TEMP_HIGH)\
-    FUNC(regex_match,  env_low_regex,          CALL_TEMP_LOW)\
-    FUNC(regex_match,  out_temp_regex,         CALL_OUT_TEMP)\
-    FUNC(regex_match,  out_vol_regex,          CALL_OUT_VOL)\
-    FUNC(regex_match,  sensor_err_regex,       CALL_SENSOR_ERR)\
-    FUNC(regex_search, find_asic_regex,        CALL_FIND_ASIC)\
-    FUNC(regex_match,  bad_420_regex,          CALL_BAD_420)\
-    FUNC(regex_search, bad_asic_list_regex,    CALL_BAD_LIST)\
-    FUNC(regex_search, sweep_ok_regex,         CALL_SWEEP_OK)\
-    FUNC(regex_match,  test_over_regex,        CALL_TEST_OVER)
+#define REG(FUNC)                                                                     \
+    FUNC(regex_search, board_sn_regex, CALL_BOARD_SN, (true))                         \
+    FUNC(regex_match, ft_version_regex, CALL_FT_VERSION, (ft == ""))                  \
+    FUNC(regex_match, chip_bin_regex, CALL_CHIP_BIN, (bin == ""))                     \
+    FUNC(regex_search, abnormal_cooling_regex, CALL_ABNORMAL, (true))                 \
+    FUNC(regex_search, asic_null_regex, CALL_ASIC_NULL, (true))                       \
+    FUNC(regex_match, env_temp_regex, CALL_TEMP, (display_temp && env_temp == -9999)) \
+    FUNC(regex_match, env_high_regex, CALL_TEMP_HIGH, (tb == type_board::unknown))    \
+    FUNC(regex_match, env_low_regex, CALL_TEMP_LOW, (tb == type_board::unknown))      \
+    FUNC(regex_match, out_temp_regex, CALL_OUT_TEMP, (tb == type_board::unknown))     \
+    FUNC(regex_match, out_vol_regex, CALL_OUT_VOL, (tb == type_board::unknown))       \
+    FUNC(regex_match, sensor_err_regex, CALL_SENSOR_ERR, (tb == type_board::unknown)) \
+    FUNC(regex_search, find_asic_regex, CALL_FIND_ASIC, (tb == type_board::unknown))  \
+    FUNC(regex_match, bad_420_regex, CALL_BAD_420, (tb == type_board::unknown))       \
+    FUNC(regex_search, bad_asic_list_regex, CALL_BAD_LIST, (true))                    \
+    FUNC(regex_search, sweep_ok_regex, CALL_SWEEP_OK, (tb == type_board::unknown))    \
+    FUNC(regex_match, test_over_regex, CALL_TEST_OVER, (true))
 
-#define CHECK_LINE_DATA(regex_fuc, regex_str, func)\
-            if(regex_fuc(buf, m, regex_str)){\
-                auto f = func;\
-                if(f(nullptr))\
-                    continue;\
-                else\
-                    break;\
-            }
+#define CHECK_LINE_DATA(regex_fuc, regex_str, func, args...) \
+    if (regex_fuc(buf, m, regex_str)) {                      \
+        auto f = func;                                       \
+        if (f(nullptr))                                      \
+            continue;                                        \
+        else                                                 \
+            break;                                           \
+    }
 
 const std::regex board_sn_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}]board_sn = (.+)");
 const std::regex abnormal_cooling_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}]abnormal cooling on asic\\[(\\d+)]");
