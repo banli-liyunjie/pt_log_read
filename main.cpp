@@ -18,6 +18,7 @@ count_board cb;
 
 bool display_ok = false;
 bool display_temp = false;
+bool display_version = false;
 string self_file_name;
 
 int main(int argc, char *argv[]){
@@ -28,6 +29,9 @@ int main(int argc, char *argv[]){
         } else if ((string(argv[i]) == "-t" || string(argv[i]) == "--temp")) {
             cout << "should display the env temperature" << endl;
             display_temp = true;
+        } else if ((string(argv[i]) == "-v" || string(argv[i]) == "--version")) {
+            cout << "should display the soft version" << endl;
+            display_version = true;
         }
     }
 
@@ -124,6 +128,10 @@ void get_log_error(const char* p)
     char c_str[100];                                                          \
     sprintf(c_str, "%s %s %s \0", board_sn.c_str(), ft.c_str(), bin.c_str()); \
     str += string(c_str);                                                     \
+    if (display_version) {                                                    \
+        str += "[" + soft_version.substr(0, 6);                               \
+        str += " - " + commit_time + "] ";                                    \
+    }                                                                         \
     if (display_temp) {                                                       \
         sprintf(c_str, "[env temp : %d] \0", env_temp);                       \
         str += string(c_str);                                                 \
@@ -179,6 +187,7 @@ type_board parse_single_file(ofstream& outf, const string& f_path, string& board
     type_board tb = type_board::unknown;
 
     string ft = "", bin = "";
+    string soft_version = "", commit_time = "";
     int env_temp = -9999;
     int level = 0;
 

@@ -108,6 +108,11 @@
             }\
             return false;\
 }
+#define CALL_SOFT_VERSION [&](void* ptr) { \
+    soft_version = m[1];                   \
+    commit_time = m[2];                    \
+    return true;                           \
+}
 
 #define REG(FUNC)                                                                     \
     FUNC(regex_search, board_sn_regex, CALL_BOARD_SN, (true))                         \
@@ -125,7 +130,8 @@
     FUNC(regex_match, bad_420_regex, CALL_BAD_420, (tb == type_board::unknown))       \
     FUNC(regex_search, bad_asic_list_regex, CALL_BAD_LIST, (true))                    \
     FUNC(regex_search, sweep_ok_regex, CALL_SWEEP_OK, (tb == type_board::unknown))    \
-    FUNC(regex_match, test_over_regex, CALL_TEST_OVER, (true))
+    FUNC(regex_match, test_over_regex, CALL_TEST_OVER, (true))                        \
+    FUNC(regex_match, version_regex, CALL_SOFT_VERSION, (display_version))
 
 #define CHECK_LINE_DATA(regex_fuc, regex_str, func, args...) \
     if (regex_fuc(buf, m, regex_str)) {                      \
@@ -152,3 +158,4 @@ const std::regex env_high_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.
 const std::regex ft_version_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}]ft_version = (.+)");
 const std::regex chip_bin_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}]chip_bin = (\\d+)");
 const std::regex env_temp_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}]env temp: (\\d+)");
+const std::regex version_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}].+ version: (.+) commit: (.+) \\d{2}:\\d{2}:\\d{2} build: .+");
