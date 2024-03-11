@@ -142,20 +142,20 @@
             break;                                           \
     }
 
-const std::regex board_sn_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}]board_sn = (.+)");
-const std::regex abnormal_cooling_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}]abnormal cooling on asic\\[(\\d+)]");
-const std::regex asic_null_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}]asic \\[(\\d+)]:NULL");
-const std::regex out_temp_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}]exit info:asic temp outof range");
-const std::regex out_vol_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}]exit info:asic vol outof range");
-const std::regex sensor_err_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}]exit info:sensor err");
-const std::regex find_asic_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}]L1: Find asics");
-const std::regex bad_420_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}]level_high: \\d, level_low: 3, matched_freq: \\d+, freq_min: \\d+");
-const std::regex bad_asic_list_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}]bad asic list\\[\\d+]:(\\d+)");
-const std::regex sweep_ok_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}]L2: Level:  (\\d+)");
-const std::regex test_over_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}]TEST OVER...");
-const std::regex env_low_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}]env temp (\\d+) is too low, pattern text exit");
-const std::regex env_high_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}]env temp (\\d+) is too high, pattern text exit");
-const std::regex ft_version_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}]ft_version = (.+)");
-const std::regex chip_bin_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}]chip_bin = (\\d+)");
-const std::regex env_temp_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}]env temp: (\\d+)");
-const std::regex version_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}].+ version: (.+) commit: (.+) \\d{2}:\\d{2}:\\d{2} build: .+");
+const std::regex board_sn_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}](?: edf_v5_dump_data : )?board_sn = (.+)");
+const std::regex abnormal_cooling_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}](?: print_asic_abnormal_list : )?abnormal cooling on asic\\[(\\d+)]");
+const std::regex asic_null_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}](?: check_asic_val : )?asic \\[(\\d+)]:NULL");
+const std::regex out_temp_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}](?: err_exit : )?exit info:asic temp outof range");
+const std::regex out_vol_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}](?: err_exit : )?exit info:asic vol outof range");
+const std::regex sensor_err_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}](?: err_exit : )?exit info:sensor err");
+const std::regex find_asic_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}](?: lcd_show : )?L1: Find asics");
+const std::regex bad_420_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}](?: normal_mode_level_sweep : )?level_high: \\d, level_low: 3, matched_freq: \\d+, freq_min: \\d+");
+const std::regex bad_asic_list_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}](?: add_bad_asic_ids : )?bad asic list\\[\\d+]:(\\d+)");
+const std::regex sweep_ok_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}](?: lcd_show : )?L2: Level:  (\\d+)");
+const std::regex test_over_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}](?: main : )?TEST OVER...");
+const std::regex env_low_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}](?: pt_before_send_nonce : )?env temp (\\d+) is too low, pattern text exit");
+const std::regex env_high_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}](?: pt_before_send_nonce : )?env temp (\\d+) is too high, pattern text exit");
+const std::regex ft_version_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}](?: edf_v5_dump_data : )?ft_version = (.+)");
+const std::regex chip_bin_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}](?: edf_v5_dump_data : )?chip_bin = (\\d+)");
+const std::regex env_temp_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}](?: pt_before_send_nonce : )?env temp: (\\d+)");
+const std::regex version_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}](?: main : )?build version information::  version: (.+) commit: (.+) \\d{2}:\\d{2}:\\d{2} build: .+");
