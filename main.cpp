@@ -79,7 +79,8 @@ int main(int argc, char *argv[]){
 
     get_log_error(&buffer[0], log_dir);
 
-    system("pause");
+    if (!out_in_std)
+        system("pause");
 
     return 0;
 }
