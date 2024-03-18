@@ -1,17 +1,20 @@
-#include <windows.h>
-#include <iostream>
-#include <vector>
-#include <fstream>
-#include <set>
-#include <unordered_set>
-#include <unordered_map>
-#include "regex_info.h"
 #include "count_board.h"
+#include "regex_info.h"
+#include "result_print/print.h"
+#include <fstream>
+#include <iostream>
+#include <set>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
+#include <windows.h>
 
 using namespace std;
+using banli::level;
+using banli::print;
 
-void get_log_error(const char* p);
-type_board parse_single_file(ofstream& outf, const string& f_path, string& board_sn);
+void get_log_error(const char* exe_path, const char* log_path);
+type_board parse_single_file(print& outf, const string& f_path, string& board_sn);
 
 unordered_set<string> board_uset;
 count_board cb;
@@ -19,9 +22,11 @@ count_board cb;
 bool display_ok = false;
 bool display_temp = false;
 bool display_version = false;
+bool out_in_std = false;
 string self_file_name;
 
 int main(int argc, char *argv[]){
+    char log_dir[MAX_PATH] = { 0 };
     for (int i = 1; i < argc; ++i) {
         if ((string(argv[i]) == "-o" || string(argv[i]) == "--ok")) {
             cout << "should display the ok board" << endl;
@@ -32,10 +37,16 @@ int main(int argc, char *argv[]){
         } else if ((string(argv[i]) == "-v" || string(argv[i]) == "--version")) {
             cout << "should display the soft version" << endl;
             display_version = true;
+        } else if ((string(argv[i]) == "-d" || string(argv[i]) == "--directory")) {
+            strncpy(log_dir, argv[++i], MAX_PATH);
+        } else if ((string(argv[i]) == "-p" || string(argv[i]) == "--print")) {
+            cout << "should print in std" << endl;
+            out_in_std = true;
         }
     }
 
     std::vector<char> buffer(MAX_PATH);
+
     DWORD copied = GetModuleFileNameA(NULL, &buffer[0], static_cast<DWORD>(buffer.size()));
 
     while (copied == buffer.size() && GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
@@ -58,22 +69,25 @@ int main(int argc, char *argv[]){
         *lastBackslash = '\0'; // 将最后一个反斜杠替换为空字符，从而去掉文件名
     }
 
-    std::cout << "Executable directory: " << &buffer[0] << std::endl;
-    std::cout << "Executable file: " << self_file_name << std::endl;
+    if (0 == strlen(log_dir))
+        strncpy(log_dir, &buffer[0], MAX_PATH);
+    cout << "log directory: " << log_dir << endl;
+    cout << "Executable directory: " << &buffer[0] << endl;
+    cout << "Executable file: " << self_file_name << endl;
 
     board_uset.clear();
 
-    get_log_error(&buffer[0]);
-    
+    get_log_error(&buffer[0], log_dir);
+
     system("pause");
 
     return 0;
 }
 
-void get_log_error(const char* p)
+void get_log_error(const char* exe_path, const char* log_path)
 {
-    ofstream outf;
-    string path(p);
+    print outf(out_in_std);
+    string path(exe_path);
     path = path + "/result.txt";
     outf.open(path, ios::out | ios::trunc);
     //********************************************
@@ -81,12 +95,12 @@ void get_log_error(const char* p)
     char find_path[MAX_PATH];
     WIN32_FIND_DATA find_file_data;
 
-    strcpy(find_path, p);
+    strcpy(find_path, log_path);
     strcat(find_path, "\\*.*");
 
     HANDLE h_find = FindFirstFile(find_path, &find_file_data);
     if(INVALID_HANDLE_VALUE == h_find){
-        cout << "error find\n";
+        outf.display(level::debug, "error find, please check if the file path contains any spaces\n");
         return;
     }
 
@@ -98,8 +112,8 @@ void get_log_error(const char* p)
         if(find_file_data.dwFileAttributes & (~FILE_ATTRIBUTE_DIRECTORY)){
             string file_name(find_file_data.cFileName);
             if(file_name != "result.txt" && file_name != self_file_name){
-                cout << file_name << endl;
-                string f_path(p);
+                outf.display(level::debug, "%s\n", file_name.c_str());
+                string f_path(log_path);
                 f_path += "/" + file_name;
                 tb = parse_single_file(outf, f_path, board_sn);
                 if(type_board::repeat != tb){
@@ -174,7 +188,8 @@ void get_log_error(const char* p)
     return str;                                                               \
 }
 
-type_board parse_single_file(ofstream& outf, const string& f_path, string& board_sn){
+type_board parse_single_file(print& outf, const string& f_path, string& board_sn)
+{
     ifstream file;
     file.open(f_path, ios::in);
     char buf[2048];

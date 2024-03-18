@@ -1,26 +1,26 @@
 #include <regex>
 #include <string>
 
-#define CALL_BOARD_SN [&](void* ptr){\
-            if(board_sn != ""){\
-                if(board_sn == m[1])\
-                    return true;\
-                else{\
-                    cout << "this log is abnormal"<< endl;\
-                    cb.total--;\
-                    tb = type_board::unknown;\
-                    return false;\
-                }\
-            }\
-            board_sn = m[1];\
-            if(board_uset.find(board_sn) != board_uset.end()){\
-                cout << "repeated board : " << board_sn << endl;\
-                tb = type_board::repeat;\
-                return false;\
-            }\
-            cb.total++;\
-            board_uset.emplace(board_sn);\
-            return true;\
+#define CALL_BOARD_SN [&](void* ptr) {                                         \
+    if (board_sn != "") {                                                      \
+        if (board_sn == m[1])                                                  \
+            return true;                                                       \
+        else {                                                                 \
+            outf.display(level::debug, "this log is abnormal\n");              \
+            cb.total--;                                                        \
+            tb = type_board::unknown;                                          \
+            return false;                                                      \
+        }                                                                      \
+    }                                                                          \
+    board_sn = m[1];                                                           \
+    if (board_uset.find(board_sn) != board_uset.end()) {                       \
+        outf.display(level::debug, "repeated board : %s\n", board_sn.c_str()); \
+        tb = type_board::repeat;                                               \
+        return false;                                                          \
+    }                                                                          \
+    cb.total++;                                                                \
+    board_uset.emplace(board_sn);                                              \
+    return true;                                                               \
 }
 #define CALL_FT_VERSION [&](void* ptr){\
             ft = m[1];\
