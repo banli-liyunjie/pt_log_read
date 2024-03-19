@@ -126,14 +126,8 @@ void get_log_error(const char* exe_path, const char* log_path)
         }
         if(!FindNextFile(h_find, &find_file_data)) break;
     }
-
-    outf << "\ntotal : " << cb.total << "  ||  sweep ok : " << cb[sweep_ok];
-    outf << "\nbad_420 : " << cb[bad_420] << "  ||  bad asic : " << cb[bad_asic];
-    outf << "\nout temp : " << cb[out_temp] << "  ||  out vol : " << cb[out_vol];
-    outf << "\nfind asic err : " << cb[find_asic_err] << "  ||  sensor err : " << cb[sensor_err];
-    outf << "\nenv temp too low : " << cb[env_low] << "  ||  env temp too high : " << cb[env_high];
-    outf << "\nunknow board info : " << cb[unknown] << "\n";
-    for(auto uk : unknow_board){
+    PRINT_RESULT(GET_PARA);
+    for (auto uk : unknow_board) {
         outf << uk.first << " board_sn " << uk.second << "\n";
     }
 }
