@@ -58,29 +58,30 @@ inline std::string get_board_type_str(type_board tb){
 #define _GET_PARA(TYPE, _1, _2, INFO) TYPE, INFO,
 #define GET_PARA TYPE_REG(_GET_PARA) _TAIL
 
-#define _PRINT_HEAD(TYPE, INFO) outf << "\ntotal : " << cb.total << "  ||  " << INFO << cb[type_board::TYPE] << "\n"
-#define _PRINT_TAIL(TYPE, INFO) outf << INFO << cb[type_board::TYPE] << "\n"
 #define PRINT_PARA_2(TYPE, INFO) outf << INFO << cb[type_board::TYPE] << "\n"
 #define PRINT_PARA_4(TYPE_1, INFO_1, TYPE_2, INFO_2) outf << INFO_1 << cb[type_board::TYPE_1] << "  ||  " << INFO_2 << cb[type_board::TYPE_2] << "\n"
-
-// #define _SUM_PARA(_6, _5, _4, _3, _2, _1, NUMS, args...) NUMS
-// #define SUM_PARA(args...) _SUM_PARA(_0, ##args, 5, 4, 3, 2, 1, 0)
-
-#define FUNC_3(TYPE, INFO, args...) PRINT_PARA_2(TYPE, INFO)
-#define FUNC_5(TYPE_1, INFO_1, TYPE_2, INFO_2, args...) PRINT_PARA_4(TYPE_1, INFO_1, TYPE_2, INFO_2)
+#define FUNC_3(_1, _2, args...) PRINT_PARA_2(_1, _2)
+#define FUNC_5(_1, _2, _3, _4, args...) PRINT_PARA_4(_1, _2, _3, _4)
 #define FX(_1, _2, _3, _4, args...) \
     PRINT_PARA_4(_1, _2, _3, _4);   \
-    FUNC_NAME(__PRINT_MID)          \
-    ()(args)
+    ITERATION_FUNC(_PRINT_MID, args)
 
-#define _CALL_FUNC_PARA_N(F32, F31, F30, F29, F28, F27, F26, F25, F24, F23, F22, F21, F20, F19, F18, F17, F16, F15, F14, F13, F12, F11, F10, F9, F8, F7, F6, F5, F4, F3, F2, F1, FUNC, args...) FUNC
-#define CALL_FUNC_PARA_N(args...) _CALL_FUNC_PARA_N(_F0, ##args, FX, FX, FX, FX, FX, FX, FX, FX, FX, FX, FX, FX, FX, FX, FX, FX, FX, FX, FX, FX, FX, FX, FX, FX, FX, FX, FUNC_5, FUNC_4, FUNC_3, FUNC_2, FUNC_1, FUNC_0)
+//* call different functions based on the number of arguments
+// if it cannot be expanded correctly, perhaps you need to extend this macro
+#define _PRINT_MID_N(F32, F31, F30, F29, F28, F27, F26, F25, F24, F23, F22, F21, F20, F19, F18, F17, F16, F15, F14, F13, F12, F11, F10, F9, F8, F7, F6, F5, F4, F3, F2, F1, FUNC, args...) FUNC
+#define PRINT_MID_N(args...) _PRINT_MID_N(_F0, ##args, FX, FX, FX, FX, FX, FX, FX, FX, FX, FX, FX, FX, FX, FX, FX, FX, FX, FX, FX, FX, FX, FX, FX, FX, FX, FX, FUNC_5, FUNC_4, FUNC_3, FUNC_2, FUNC_1, FUNC_0)
 
-#define _PRINT_MID(args...) CALL_FUNC_PARA_N(args)(args)
-#define __PRINT_MID() _PRINT_MID
+#define PRINT_MID(args...) PRINT_MID_N(args)(args)
+#define _PRINT_MID() PRINT_MID
+
+//* macro function iteration: delayed expansion
 #define EMPTY()
 #define FUNC_NAME(NAME) NAME EMPTY()
+#define _ITERATION_FUNC(NAME, args...) FUNC_NAME(NAME)()(args)
+#define ITERATION_FUNC(NAME, args...) _ITERATION_FUNC(NAME, args)
 
+//* macro function iteration: multi-level expansion
+// if it cannot be expanded correctly, perhaps you need to extend this macro
 #define Expand(args...) _Expand1(_Expand1(_Expand1(args)))
 #define _Expand1(args...) _Expand2(_Expand2(_Expand2(args)))
 #define _Expand2(args...) _Expand3(_Expand3(_Expand3(args)))
@@ -88,10 +89,13 @@ inline std::string get_board_type_str(type_board tb){
 #define _Expand4(args...) _Expand5(_Expand5(_Expand5(args)))
 #define _Expand5(args...) args
 
-#define _PRINT_RESULT(_TYPE_1, _INFO_1, _TYPE_2, _INFO_2, args...) \
-    _PRINT_HEAD(_TYPE_2, _INFO_2);                                 \
-    Expand(_PRINT_MID(args));                                      \
-    _PRINT_TAIL(_TYPE_1, _INFO_1)
+#define PRINT_HEAD(TYPE, INFO) outf << "\ntotal : " << cb.total << "  ||  " << INFO << cb[type_board::TYPE] << "\n"
+#define PRINT_TAIL(TYPE, INFO) outf << INFO << cb[type_board::TYPE] << "\n"
+
+#define _PRINT_RESULT(TYPE_1, INFO_1, TYPE_2, INFO_2, args...) \
+    PRINT_HEAD(TYPE_2, INFO_2);                                \
+    Expand(PRINT_MID(args));                                   \
+    PRINT_TAIL(TYPE_1, INFO_1)
 #define PRINT_RESULT(args...) _PRINT_RESULT(args)
 
 #undef TYPE_STRING
