@@ -149,7 +149,7 @@ const std::regex out_temp_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.
 const std::regex out_vol_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}](?: err_exit : )?exit info:asic vol outof range");
 const std::regex sensor_err_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}](?: err_exit : )?exit info:sensor err");
 const std::regex find_asic_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}](?: lcd_show : )?L1: Find asics");
-const std::regex bad_420_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}](?: normal_mode_level_sweep : )?level_high: \\d, level_low: 3, matched_freq: \\d+, freq_min: \\d+");
+const std::regex bad_420_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}](?: normal_mode_level_sweep : )?level_high: \\d, level_low: \\d, matched_freq: \\d+, freq_min: \\d+");
 const std::regex bad_asic_list_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}](?: add_bad_asic_ids : )?bad asic list\\[\\d+]:(\\d+)");
 const std::regex sweep_ok_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}](?: lcd_show : )?L2: Level:  (\\d+)");
 const std::regex test_over_regex("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}](?: main : )?TEST OVER...");
