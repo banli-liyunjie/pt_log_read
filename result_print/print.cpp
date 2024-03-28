@@ -31,6 +31,16 @@ print& print::display(uint32_t level, const char* str, ...)
 
     return *this;
 }
+print& print::display(uint32_t level, const string& str)
+{
+    if ((level == debug && !out_in_std) || (level == result && out_in_std)) {
+        cout << str;
+    } else if (level == result) {
+        outf << str;
+    }
+
+    return *this;
+}
 
 print& print::operator<<(print& (*_pfn)(print&))
 {

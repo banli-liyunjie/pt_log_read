@@ -2,6 +2,7 @@
 #include <fstream>
 #include <ios>
 #include <iostream>
+#include <stdint.h>
 
 #define MAX_LINE_SIZE 2048
 
@@ -21,6 +22,7 @@ public:
     ~print();
     void open(const std::string& __s, std::ios_base::openmode __mode);
     print& display(uint32_t level, const char* str, ...);
+    print& display(uint32_t level, const std::string& str);
     template <typename _T>
     print& operator<<(const _T& _type) // default level : result
     {

@@ -1,6 +1,7 @@
 #include "count_board.h"
 #include "regex_info.h"
 #include "result_print/print.h"
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <set>
@@ -15,6 +16,7 @@ using banli::print;
 
 void get_log_error(const char* exe_path, const char* log_path);
 type_board parse_single_file(print& outf, const string& f_path, string& board_sn);
+void copy_fail_log(print& outf, const string& file_name, const string& f_path);
 
 unordered_set<string> board_uset;
 count_board cb;
@@ -121,6 +123,8 @@ void get_log_error(const char* exe_path, const char* log_path)
                     cb[tb]++;
                     if(type_board::unknown == tb)
                         unknow_board.emplace(pair<string, string>(file_name, board_sn == "" ? "unknown" : board_sn));
+                    if (type_board::sweep_ok != tb)
+                        copy_fail_log(outf, f_path, string(log_path));
                 }
             }
         }
@@ -214,4 +218,27 @@ type_board parse_single_file(print& outf, const string& f_path, string& board_sn
 
     file.close();
     return tb;
+}
+
+void copy_fail_log(print& outf, const string& file_name, const string& f_path)
+{
+    filesystem::path target_dir = std::filesystem::path(f_path) / "fail_logs";
+    if (!filesystem::exists(target_dir)) {
+        if (!filesystem::create_directory(target_dir)) {
+            outf.display(level::debug, "make dir failed!\n");
+            return;
+        }
+    }
+    if (!filesystem::exists(file_name)) {
+        outf.display(level::debug, "file is not exists!\n");
+        return;
+    }
+    filesystem::path target_file = target_dir / std::filesystem::path(file_name).filename();
+    try {
+        filesystem::copy(file_name, target_file, filesystem::copy_options::overwrite_existing);
+    } catch (std::filesystem::filesystem_error& e) {
+        outf.display(level::debug, "Copying failed: " + string(e.what()) + "\n");
+    } catch (const std::exception& e) {
+        outf.display(level::debug, "An error occurred: " + string(e.what()) + "\n");
+    }
 }
