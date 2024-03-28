@@ -14,7 +14,7 @@ using namespace std;
 using banli::level;
 using banli::print;
 
-void get_log_error(const char* exe_path, const char* log_path);
+void get_log_error(const string& exe_path, const string& log_path);
 type_board parse_single_file(print& outf, const string& f_path, string& board_sn);
 void copy_fail_log(print& outf, const string& file_name, const string& f_path);
 
@@ -28,7 +28,7 @@ bool out_in_std = false;
 string self_file_name;
 
 int main(int argc, char *argv[]){
-    char log_dir[MAX_PATH] = { 0 };
+    string log_dir = "";
     for (int i = 1; i < argc; ++i) {
         if ((string(argv[i]) == "-o" || string(argv[i]) == "--ok")) {
             cout << "should display the ok board" << endl;
@@ -40,46 +40,42 @@ int main(int argc, char *argv[]){
             cout << "should display the soft version" << endl;
             display_version = true;
         } else if ((string(argv[i]) == "-d" || string(argv[i]) == "--directory")) {
-            strncpy(log_dir, argv[++i], MAX_PATH);
+            log_dir = string(argv[++i]);
         } else if ((string(argv[i]) == "-p" || string(argv[i]) == "--print")) {
             cout << "should print in std" << endl;
             out_in_std = true;
         }
     }
 
-    std::vector<char> buffer(MAX_PATH);
+    filesystem::path directory_path;
+    try {
+        wchar_t buffer[MAX_PATH] = { 0 };
+        if (GetModuleFileNameW(NULL, buffer, MAX_PATH) == 0) {
+            cerr << "Error getting module file name, last error: " << GetLastError() << endl;
+            return 1;
+        }
+        filesystem::path full_path(buffer);
+        self_file_name = full_path.filename().string();
+        directory_path = full_path.parent_path();
 
-    DWORD copied = GetModuleFileNameA(NULL, &buffer[0], static_cast<DWORD>(buffer.size()));
+        cout << "Executable name: " << full_path.filename() << endl;
+        cout << "Directory path: " << directory_path << endl;
 
-    while (copied == buffer.size() && GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
-        // 缓冲区太小，需要扩展
-        buffer.resize(buffer.size() * 2);
-        copied = GetModuleFileNameA(NULL, &buffer[0], static_cast<DWORD>(buffer.size()));
-    }
-
-    if (copied == 0) {
-        std::cerr << "Error getting module file name, last error: " << GetLastError() << std::endl;
+    } catch (const std::filesystem::filesystem_error& e) {
+        std::cerr << "Error: " << e.what() << std::endl;
+        return 1;
+    } catch (const std::exception& e) {
+        std::cerr << "Error: " << e.what() << std::endl;
         return 1;
     }
 
-    // 确保字符串是以空字符结尾的
-    buffer[copied] = '\0';
-
-    char* lastBackslash = strrchr(&buffer[0], '\\');
-    if (lastBackslash != NULL) {
-        self_file_name = string(lastBackslash + 1);
-        *lastBackslash = '\0'; // 将最后一个反斜杠替换为空字符，从而去掉文件名
-    }
-
-    if (0 == strlen(log_dir))
-        strncpy(log_dir, &buffer[0], MAX_PATH);
+    if (log_dir == "")
+        log_dir = directory_path.string();
     cout << "log directory: " << log_dir << endl;
-    cout << "Executable directory: " << &buffer[0] << endl;
-    cout << "Executable file: " << self_file_name << endl;
 
     board_uset.clear();
 
-    get_log_error(&buffer[0], log_dir);
+    get_log_error(directory_path.string(), log_dir);
 
     if (!out_in_std)
         system("pause");
@@ -87,7 +83,7 @@ int main(int argc, char *argv[]){
     return 0;
 }
 
-void get_log_error(const char* exe_path, const char* log_path)
+void get_log_error(const string& exe_path, const string& log_path)
 {
     print outf(out_in_std);
     string path(exe_path);
@@ -95,13 +91,11 @@ void get_log_error(const char* exe_path, const char* log_path)
     outf.open(path, ios::out | ios::trunc);
     //********************************************
 
-    char find_path[MAX_PATH];
     WIN32_FIND_DATA find_file_data;
 
-    strcpy(find_path, log_path);
-    strcat(find_path, "\\*.*");
+    string find_path = log_path + "/*.*";
 
-    HANDLE h_find = FindFirstFile(find_path, &find_file_data);
+    HANDLE h_find = FindFirstFile(find_path.c_str(), &find_file_data);
     if(INVALID_HANDLE_VALUE == h_find){
         outf.display(level::debug, "error find, please check if the file path contains any spaces\n");
         return;
@@ -124,7 +118,7 @@ void get_log_error(const char* exe_path, const char* log_path)
                     if(type_board::unknown == tb)
                         unknow_board.emplace(pair<string, string>(file_name, board_sn == "" ? "unknown" : board_sn));
                     if (type_board::sweep_ok != tb)
-                        copy_fail_log(outf, f_path, string(log_path));
+                        copy_fail_log(outf, f_path, log_path);
                 }
             }
         }
@@ -235,6 +229,8 @@ void copy_fail_log(print& outf, const string& file_name, const string& f_path)
     }
     filesystem::path target_file = target_dir / std::filesystem::path(file_name).filename();
     try {
+        if (filesystem::exists(target_file))
+            filesystem::remove(target_file);
         filesystem::copy(file_name, target_file, filesystem::copy_options::overwrite_existing);
     } catch (std::filesystem::filesystem_error& e) {
         outf.display(level::debug, "Copying failed: " + string(e.what()) + "\n");
