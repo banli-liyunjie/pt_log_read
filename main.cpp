@@ -25,6 +25,7 @@ bool display_ok = false;
 bool display_temp = false;
 bool display_version = false;
 bool out_in_std = false;
+bool auto_copy = true;
 string self_file_name;
 
 int main(int argc, char *argv[]){
@@ -44,6 +45,9 @@ int main(int argc, char *argv[]){
         } else if ((string(argv[i]) == "-p" || string(argv[i]) == "--print")) {
             cout << "should print in std" << endl;
             out_in_std = true;
+        } else if ((string(argv[i]) == "-c" || string(argv[i]) == "--copy")) {
+            cout << "disable auto copy" << endl;
+            auto_copy = false;
         }
     }
 
@@ -117,7 +121,7 @@ void get_log_error(const string& exe_path, const string& log_path)
                     cb[tb]++;
                     if(type_board::unknown == tb)
                         unknow_board.emplace(pair<string, string>(file_name, board_sn == "" ? "unknown" : board_sn));
-                    if (type_board::sweep_ok != tb)
+                    if (auto_copy && type_board::sweep_ok != tb)
                         copy_fail_log(outf, f_path, log_path);
                 }
             }
